@@ -25,5 +25,5 @@ fs.promises
     }
   })
   .catch((err) => {
-    console.log(err);
+    console.log(`Something went wrong with error code: ${err}`);
   });
