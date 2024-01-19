@@ -19,7 +19,6 @@ const fileStat = async (file) => {
 fs.promises
   .readdir(secretDir)
   .then(async (files) => {
-    const arr = [];
     for (const file of files) {
       fileStat(file);
     }
