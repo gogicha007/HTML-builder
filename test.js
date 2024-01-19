@@ -1,18 +1,32 @@
-const { stdin, stdout, exit } = process;
+const fs = require('fs');
+const path = require('path');
 
-const flag = process.argv[2];
+const secretDir = path.join(__dirname, 'secret-folder');
 
-const allowedFlags = ['-d', '-f'];
-if (!allowedFlags.includes(flag)) {
-  stdout.write('Please ender -d or -f flags');
-  exit();
-}
+const fileStat = async (file) => {
+  fs.stat(path.join(secretDir, file), (error, stats) => {
+    if (error) console.log(`Something went wrong with error code: ${error}`);
+    else {
+      return stats;
+    }
+  });
+};
 
-if ((flag === '-d')) {
-  stdout.write(__dirname);
-  exit();
-}
-if ((flag === '-f')) {
-  stdout.write(__filename);
-  exit();
-}
+fs.readdir(secretDir, (err, files) => {
+  if (err) console.log(err);
+  else {
+    console.log('\nCurrent directory filenames:');
+    for await (const file of files) {
+      const fileObj = await fileStat(file);
+      console.log(fileObj)
+    }
+  }
+});
+
+// if (fileObj.isFile()) {
+//   console.log(
+//     `${path.parse(file).name} - ${path.parse(file).ext.substring(1)} - ${
+//       fileObj.size / 1000
+//     }kb`,
+//   );
+// }
