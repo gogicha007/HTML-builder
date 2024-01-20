@@ -1,4 +1,5 @@
-const { stdin, stdout, stderr } = process;
+const readLine = require('node:readline');
+const { stdin: input, stdout: output } = require('node:process');
 const fs = require('fs');
 const path = require('path');
 const file = path.join(__dirname, 'text.txt');
@@ -15,14 +16,22 @@ const writeToFile = (data) => {
   });
 };
 
-stdout.write('Please enter the data:\n');
-stdin.setEncoding('utf-8');
-stdin.on('data', (data) => {
-  const inData = data;
-  writeToFile(data);
+const rl = readLine.createInterface({ input, output });
+rl.setPrompt('Please enter the data:\n');
+rl.prompt();
+rl.on('line', (data) => {
+  if (data === 'exit') {
+    farewell();
+  } else {
+    writeToFile(`${data}\n`);
+  }
 });
 
-process.on('SIGINT', () => {
-  stderr.write(`Good bye...`);
+rl.on('SIGINT', () => {
+  farewell();
+})
+
+function farewell() {
+  console.log('Good bye...');
   process.exit();
-});
+}
