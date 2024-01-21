@@ -1,5 +1,5 @@
 const readLine = require('node:readline');
-const { stdin: input, stdout: output } = require('node:process');
+const { stdin: input, stdout: output, exit } = require('node:process');
 const fs = require('fs');
 const path = require('path');
 const file = path.join(__dirname, 'text.txt');
@@ -17,7 +17,7 @@ const writeToFile = (data) => {
 };
 
 const rl = readLine.createInterface({ input, output });
-rl.setPrompt('Please enter the data:\n');
+rl.setPrompt('Good day! Please enter the text:\n');
 rl.prompt();
 rl.on('line', (data) => {
   if (data === 'exit') {
@@ -32,6 +32,6 @@ rl.on('SIGINT', () => {
 })
 
 function farewell() {
-  console.log('Good bye...');
-  process.exit();
+  console.log('\nGood bye...');
+  exit();
 }
