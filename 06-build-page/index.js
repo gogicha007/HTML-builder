@@ -79,7 +79,7 @@ fs.promises
     });
 
     arr.forEach((data) => {
-      fs.appendFile(path.join(stylesFolder, 'styles.css'), data, (err) => {
+      fs.appendFile(path.join(distFolder, 'styles.css'), data, (err) => {
         if (err) throw err;
       });
     });
