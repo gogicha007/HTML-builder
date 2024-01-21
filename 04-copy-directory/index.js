@@ -19,9 +19,13 @@ fs.mkdir(destFolder, { recursive: true }, (err) => {
     .then(async (files) => {
       for (const file of files) {
         if (file.isFile()) {
-          fs.copyFile(srcFile(file.name), destFile(file.name), (err) => {
-            if (err) handleError(err);
-          });
+          fs.copyFile(
+            path.join(srcFolder, file.name),
+            path.join(destFolder, file.name),
+            (err) => {
+              if (err) handleError(err);
+            },
+          );
         }
       }
     })
