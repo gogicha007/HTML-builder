@@ -7,7 +7,7 @@ const destFolder = path.join(__dirname, 'project-dist');
 const srcFile = (name) => path.join(srcFolder, name);
 const destFile = path.join(destFolder, 'bundle.css');
 
-const getFileData = async (file) => {
+const getFileData = (file) => {
   return new Promise((resolve, reject) => {
     fs.readFile(srcFile(file), 'utf-8', (err, data) => {
       if (err) {
