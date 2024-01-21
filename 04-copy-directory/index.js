@@ -25,7 +25,7 @@ fs.mkdir(destFolder, { recursive: true }, (err) => {
     });
   fs.promises
     .readdir(srcFolder, { withFileTypes: true })
-    .then(async (files) => {
+    .then((files) => {
       for (const file of files) {
         if (file.isFile()) {
           fs.copyFile(
