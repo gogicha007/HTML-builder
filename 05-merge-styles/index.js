@@ -20,14 +20,14 @@ const getFileData = (file) => {
 
 fs.promises
   .readdir(srcFolder, { withFileTypes: true })
-  .then((files) => {
+  .then((files) => {              // return array of css file names
     return files.reduce((acc, file) => {
       if (file.isFile() && path.parse(file.name).ext === '.css')
         acc.push(file.name);
       return acc;
     }, []);
   })
-  .then(async (filesArr) => {
+  .then(async (filesArr) => {     // return array of data
     const arr = [];
     for (const file of filesArr) {
       arr.push(await getFileData(file));
@@ -40,7 +40,7 @@ fs.promises
     });
     
     arr.forEach((data) => {
-      fs.appendFile(destFile, data, (err) => {
+      fs.appendFile(destFile, `${data}\n`, (err) => {
         if(err) throw err;
       })
     })
