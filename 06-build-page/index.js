@@ -7,8 +7,8 @@ const stylesFolder = path.join(distFolder, 'styles');
 const compFolder = path.join(__dirname, 'components');
 const getPath = (dir, file) => path.join(dir, file);
 
-/* Make project-dist, assets and styles folders */
-[distFolder, assetsFolder, stylesFolder].forEach((item) => {
+/* Make project-dist and assets */
+[distFolder, assetsFolder].forEach((item) => {
   fs.mkdir(item, { recursive: true }, (err) => {
     if (err) throw err;
   });
@@ -74,12 +74,12 @@ fs.promises
   })
   .then((arr) => {
     // merge files to destination file
-    fs.writeFile(path.join(stylesFolder, 'styles.css'), '', (err) => {
+    fs.writeFile(path.join(distFolder, 'style.css'), '', (err) => {
       if (err) console.log('Error occured when writing to file');
     });
 
     arr.forEach((data) => {
-      fs.appendFile(path.join(distFolder, 'styles.css'), data, (err) => {
+      fs.appendFile(path.join(distFolder, 'style.css'), data, (err) => {
         if (err) throw err;
       });
     });
