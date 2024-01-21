@@ -14,6 +14,15 @@ fs.mkdir(destFolder, { recursive: true }, (err) => {
   if (err) {
     return handleError(err);
   }
+  fs.promises // remove contend of dest folder
+    .readdir(destFolder)
+    .then((files) => {
+      for (const file of files) {
+        fs.unlink(path.join(destFolder, file), (err) => {
+          if (err) throw err;
+        });
+      }
+    });
   fs.promises
     .readdir(srcFolder, { withFileTypes: true })
     .then(async (files) => {
