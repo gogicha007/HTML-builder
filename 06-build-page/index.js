@@ -1,123 +1,89 @@
 const fs = require('node:fs');
+const {
+  readdir,
+  mkdir,
+  readFile,
+  writeFile,
+  rm,
+} = require('node:fs/promises');
 const path = require('path');
 
 const distFolder = path.join(__dirname, 'project-dist');
 const assetsFolder = path.join(distFolder, 'assets');
-const stylesFolder = path.join(distFolder, 'styles');
 const compFolder = path.join(__dirname, 'components');
-const getPath = (dir, file) => path.join(dir, file);
 
 /* Make project-dist and assets */
-[distFolder, assetsFolder].forEach((item) => {
-  fs.mkdir(item, { recursive: true }, (err) => {
-    if (err) throw err;
-  });
-});
+makeFolders([distFolder, assetsFolder]);
+async function makeFolders() {
+  await rm(distFolder, { recursive: true, force: true });
+  await mkdir(distFolder, { recursive: true });
+  await mkdir(assetsFolder, { recursive: true });
+  copyFolder(path.join(__dirname, 'assets'), assetsFolder);
+  mergeStyles();
+  makeIndex();
+}
 /* helper for copying folders */
-const copyFolder = (src, dest) => {
-  fs.promises.readdir(src, { withFileTypes: true }).then(async (items) => {
-    const filesArr = items.filter((item) => item.isFile());
-    const foldersArr = items.filter((item) => item.isDirectory());
+const copyFolder = async (src, dest) => {
+  const content = await readdir(src, { withFileTypes: true });
 
-    foldersArr.forEach((item) => {
-      fs.mkdir(path.join(dest, item.name), { recursive: true }, (err) => {
-        if (err) throw err;
-      });
-    });
+  const filesArr = content.filter((item) => item.isFile());
+  const foldersArr = content.filter((item) => item.isDirectory());
 
-    filesArr.forEach((item) => {
-      fs.copyFile(
-        path.join(src, item.name),
-        path.join(dest, item.name),
-        (err) => {
-          if (err) throw err;
-        },
-      );
-    });
-
-    for (const item of foldersArr) {
-      copyFolder(path.join(src, item.name), path.join(dest, item.name));
-    }
-  });
-};
-
-/* copy assets folder */
-copyFolder(path.join(__dirname, 'assets'), assetsFolder);
-
-/* helper for merging files, returns file content */
-const getFileData = (file) => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(file, 'utf-8', (err, data) => {
-      if (err) return reject(err);
-      resolve(data);
-    });
-  });
-};
-/* merge styles and write to destination */
-fs.promises
-  .readdir(path.join(__dirname, 'styles'), { withFileTypes: true })
-  .then((files) => {
-    // return css file names array
-    return files.reduce((acc, file) => {
-      if (file.isFile() && path.parse(file.name).ext === '.css')
-        acc.push(file.name);
-      return acc;
-    }, []);
-  })
-  .then(async (filesArr) => {
-    // return array of data from each file
-    const arr = [];
-    for (const file of filesArr) {
-      arr.push(await getFileData(path.join(__dirname, 'styles', file)));
-    }
-    return arr;
-  })
-  .then((arr) => {
-    // merge files to destination file
-    fs.writeFile(path.join(distFolder, 'style.css'), '', (err) => {
-      if (err) console.log('Error occured when writing to file');
-    });
-
-    arr.forEach((data) => {
-      fs.appendFile(path.join(distFolder, 'style.css'), data, (err) => {
-        if (err) throw err;
-      });
-    });
-  });
-/* make index.html file */
-fs.promises
-  .readdir(compFolder, { withFileTypes: true }) // return components folder content
-  .then((items) => {
-    return items.reduce((acc, item) => {
-      if (item.isFile()) acc.push(item.name);
-      return acc;
-    }, []);
-  })
-  .then(async (files) => {
-    // return array of file content
-    const compObj = {};
-    for (const file of files) {
-      compObj[path.parse(file).name] = await getFileData(
-        path.join(__dirname, 'components', file),
-      );
-    }
-    return compObj;
-  })
-  .then((obj) => {
-    const srcHtml = fs.createReadStream(
-      path.join(__dirname, 'template.html'),
-      'utf-8',
-    );
-    fs.writeFile(path.join(distFolder, 'index.html'), '', (err) => {
+  foldersArr.forEach((item) => {
+    fs.mkdir(path.join(dest, item.name), { recursive: true }, (err) => {
       if (err) throw err;
     });
-    const destHtml = fs.createWriteStream(path.join(distFolder, 'index.html'));
-    let str = '';
-    srcHtml.on('data', (data) => {
-      str = data.toString();
-      for (const key in obj) {
-        str = str.replace(`{{${key}}}`, obj[key].trim());
-      }
-      destHtml.write(str);
-    });
   });
+
+  filesArr.forEach((item) => {
+    fs.copyFile(
+      path.join(src, item.name),
+      path.join(dest, item.name),
+      (err) => {
+        if (err) throw err;
+      },
+    );
+  });
+
+  for (const item of foldersArr) {
+    copyFolder(path.join(src, item.name), path.join(dest, item.name));
+  }
+};
+
+/* merge styles and write to destination */
+async function mergeStyles() {
+  const styleFiles = await readdir(path.join(__dirname, 'styles'), {
+    withFileTypes: true,
+  });
+  const styleNames = styleFiles.reduce((acc, file) => {
+    if (file.isFile() && path.parse(file.name).ext === '.css')
+      acc.push(file.name);
+    return acc;
+  }, []);
+  // return array of data from each file
+  const arr = [];
+  styleNames.forEach(async (fileName) => {
+    arr.push(await readFile(path.join(__dirname, 'styles', fileName)));
+    await writeFile(path.join(distFolder, 'style.css'), arr.join('\n'));
+  });
+}
+/* make index.html file */
+async function makeIndex() {
+  const compFiles = await readdir(compFolder);
+  let srcHtml = (
+    await readFile(path.join(__dirname, 'template.html'))
+  ).toString();
+  const compObj = {};
+  const obj = await Promise.all(
+    compFiles.map(async (file) => {
+      compObj[path.parse(file).name] = (
+        await readFile(path.join(__dirname, 'components', file))
+      ).toString();
+      return compObj;
+    }),
+  );
+  for (const key in obj[0]) {
+    srcHtml = srcHtml.replace(`{{${key}}}`, obj[0][key].trim());
+  }
+  await writeFile(path.join(distFolder, 'index.html'), srcHtml);
+}
